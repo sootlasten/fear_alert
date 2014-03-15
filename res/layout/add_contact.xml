@@ -1,0 +1,66 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/dark_background" >
+    
+  	<AutoCompleteTextView
+        android:id="@+id/name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="20dp"
+        android:layout_marginBottom="10dp"
+        android:textSize="35sp"
+        android:inputType="textPersonName"
+        android:imeOptions="actionNext"
+        android:hint="@string/name_hint"
+        android:completionThreshold="1" />
+  	
+    <EditText
+        android:id="@+id/number"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="20dp"
+        android:layout_marginBottom="10dp"
+        android:textSize="35sp"
+        android:inputType="number"
+        android:hint="@string/number_hint" />
+    
+    <CheckBox
+        android:id="@+id/call"
+        android:text="@string/call"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="20dp"
+        android:layout_marginBottom="10dp"
+        android:textSize="35sp"
+        android:textColor="@color/green" />
+	
+    <CheckBox
+        android:id="@+id/sms"
+        android:text="@string/sms"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="20dip"
+        android:layout_marginRight="20dip"
+        android:layout_marginBottom="10dip"
+        android:textSize="35sp"
+        android:textColor="@color/light_blue" />
+    
+    <EditText 
+        android:id="@+id/sms_content"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="20dp"
+        android:layout_marginBottom="10dp"
+        android:textSize="35sp"
+        android:inputType="textShortMessage"
+        android:hint="@string/sms_hint" />
+   
+</LinearLayout>
