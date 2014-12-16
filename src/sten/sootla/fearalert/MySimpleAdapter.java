@@ -42,14 +42,14 @@ public class MySimpleAdapter extends ArrayAdapter<Contact> {
 		textView.setTypeface(tf);
 		
 		// Change icon to call / message 
-		if (contacts.get(position).getCall() &&
-				contacts.get(position).getSMS()) {
+		if (contacts.get(position).isCall() &&
+				contacts.get(position).isSMS()) {
 			imageView.setImageResource(R.drawable.ic_call);
 			imageView2.setImageResource(R.drawable.ic_mail);
 			imageView2.setVisibility(View.VISIBLE);
-		} else if (contacts.get(position).getCall()) {
+		} else if (contacts.get(position).isCall()) {
 			imageView.setImageResource(R.drawable.ic_call);
-		} else if (contacts.get(position).getSMS()) {
+		} else if (contacts.get(position).isSMS()) {
 			imageView.setImageResource(R.drawable.ic_mail);
 		} else {
 			textView.setTextColor(Color.parseColor("#7F7F7F"));

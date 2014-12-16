@@ -20,13 +20,13 @@ public enum VerifyConst {
 		case BADLY_FORMATTED_NUMBER:
 			return "Number is incorrectly formatted, should contain only numbers.";
 		case NAME_TAKEN:
-			return "Please specify the content of the SMS.";
-		case NUMBER_TAKEN:
 			return "Name already assigned to another contact.";
-		case CALL_TAKEN:
+		case NUMBER_TAKEN:
 			return "Number already assigned to another contact.";
-		case NO_SMS_CONTENT:
+		case CALL_TAKEN:
 			return "You have already specified another contact to call to.";
+		case NO_SMS_CONTENT:
+			return "Please specify the content of the SMS.";
 		default: throw new IllegalArgumentException();
 		}
 	}

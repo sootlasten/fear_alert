@@ -4,4 +4,6 @@
     <color name="dark_background">#191919</color>
     <color name="green">#43B51F</color>
     <color name="light_blue">#00A8EC</color>
+    <color name="yellow">#FFC800</color>
+    <color name="orange">#FF8C00</color>
 </resources>

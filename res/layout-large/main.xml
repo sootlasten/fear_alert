@@ -3,21 +3,24 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/dark_background" >
+    android:background="@color/dark_background"
+    android:id="@+id/main_layout" >
         
     <TextView
         android:id="@+id/text_up"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_above="@+id/phone"
+        android:layout_alignParentTop="true"
+        android:gravity="top"
         android:layout_centerHorizontal="true"
         android:textColor="@color/white"
         android:textSize="80sp" />
         
 	<ImageView
 	    android:id="@+id/phone"
-	    android:layout_width="500dp"
-	    android:layout_height="500dp"
+	    android:layout_width="250dp"
+	    android:layout_height="250dp"
 	    android:src="@drawable/phone"
 	    android:longClickable="true"
 	    android:layout_centerInParent="true"
@@ -31,8 +34,25 @@
 	  	android:textColor="@color/white"
 	  	android:textSize="50sp"
 	  	android:layout_below="@id/phone"
-	  	android:layout_marginTop="35dp"
 	  	android:layout_centerHorizontal="true"
-	  	android:layout_alignParentBottom="true" />
+	  	android:layout_alignParentBottom="true" 
+	  	android:gravity="bottom" />
 	
+	<TextView
+        android:id="@+id/progress_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@id/phone"
+        android:text="@string/progress_text"
+        android:visibility="gone" />
+	    
+	<ProgressBar 
+        android:id="@+id/progress_bar"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:layout_below="@id/progress_text"
+	    android:layout_centerHorizontal="true"
+	    android:indeterminate="true"
+	    android:visibility="gone" />
 </RelativeLayout>

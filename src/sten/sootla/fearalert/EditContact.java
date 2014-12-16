@@ -102,16 +102,17 @@ public class EditContact extends BaseContactActivity {
 		
 		name.setText(contact.getName());
 		number.setText(contact.getNumber());
-		call.setChecked(contact.getCall());
-		sms.setChecked(contact.getSMS());
+		call.setChecked(contact.isCall());
+		sms.setChecked(contact.isSMS());
 		smsContent.setText(contact.getSMSContent());
+		sendLocation.setChecked(contact.isSendLocation());
 	}
 	
 	public boolean contactInfChanged() {
 		if (contact.getName().equals(name.getText().toString()) &&
 				contact.getNumber().equals(number.getText().toString()) &&
-				contact.getCall() == call.isChecked() &&
-				contact.getSMS() == sms.isChecked() &&
+				contact.isCall() == call.isChecked() &&
+				contact.isSMS() == sms.isChecked() &&
 				contact.getSMSContent().equals(smsContent.getText().toString())) {
 			return false;
 		} else {

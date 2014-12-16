@@ -24,8 +24,10 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AutoCompleteTextView;
 import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.gson.Gson;
 
@@ -33,7 +35,8 @@ public abstract class BaseContactActivity extends ActionBarActivity {
 
 	public AutoCompleteTextView name;
 	public EditText number, smsContent;
-	public CheckBox call, sms;
+	public CheckBox call, sms, sendLocation;
+	public TextView locationText;
 	public SharedPreferences.Editor editor;
 	public ArrayList<String> phoneNoList;
 	LinkedHashMap<String, String> nameAndPhone, nameAndText;
@@ -50,6 +53,8 @@ public abstract class BaseContactActivity extends ActionBarActivity {
 		call = (CheckBox) findViewById(R.id.call);
 		sms = (CheckBox) findViewById(R.id.sms);
 		smsContent = (EditText) findViewById(R.id.sms_content);
+		sendLocation = (CheckBox) findViewById(R.id.send_location);
+		locationText = (TextView) findViewById(R.id.location_text);
 		
 		SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
 		editor = sharedPref.edit();
@@ -101,6 +106,17 @@ public abstract class BaseContactActivity extends ActionBarActivity {
                 number.setText(phoneNumber);
             }
         });
+        
+        sendLocation.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+			@Override
+			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+				if (isChecked) {
+					locationText.setVisibility(View.VISIBLE);
+				} else {
+					locationText.setVisibility(View.GONE);
+				}
+			}
+		});
 	    
 		setTypeface("fonts/leaguegothic_regular.ttf");
 	}
@@ -160,7 +176,7 @@ public abstract class BaseContactActivity extends ActionBarActivity {
 		}
 		// There is already another call being made
 		for (Contact contact : contacts) {
-			if (contact.getCall() == call.isChecked() && call.isChecked()) {
+			if (contact.isCall() == call.isChecked() && call.isChecked()) {
 				return VerifyConst.CALL_TAKEN;
 			}
 		}
@@ -175,22 +191,29 @@ public abstract class BaseContactActivity extends ActionBarActivity {
 				switch (problem) {
 				case EMPTY_NAME:
 					name.requestFocus();
+					break;
 				case EMPTY_NUMBER:
 					number.requestFocus();
+					break;
 				case BADLY_FORMATTED_NUMBER:
 					number.setText("");
 					number.requestFocus();
+					break;
 				case NO_SMS_CONTENT:
 					smsContent.requestFocus();
+					break;
 				case NAME_TAKEN:
 					name.setText("");
 					name.requestFocus();
+					break;
 				case NUMBER_TAKEN:
 					number.setText("");
 					number.requestFocus();
+					break;
 				case CALL_TAKEN:
 					call.setChecked(false);
 					call.requestFocus();
+					break;
 				}
 			}
 		}).show();
@@ -202,8 +225,9 @@ public abstract class BaseContactActivity extends ActionBarActivity {
 		boolean inputCall = call.isChecked();
 		boolean inputSMS = sms.isChecked();
 		String inputSMSContent = smsContent.getText().toString();
+		boolean inputSendLocation = sendLocation.isChecked();
 		
-		return new Contact(inputName, inputNumber, inputCall, inputSMS, inputSMSContent);
+		return new Contact(inputName, inputNumber, inputCall, inputSMS, inputSMSContent, inputSendLocation);
 	}
 	
 	public void setTypeface(String path) {
@@ -213,6 +237,8 @@ public abstract class BaseContactActivity extends ActionBarActivity {
 		call.setTypeface(typeface);
 		sms.setTypeface(typeface);
 		smsContent.setTypeface(typeface);
+		sendLocation.setTypeface(typeface);
+		locationText.setTypeface(typeface);
 	}
 	
 	public ArrayList<Contact> getAllContacts() {

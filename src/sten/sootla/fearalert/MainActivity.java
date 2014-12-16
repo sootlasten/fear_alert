@@ -3,10 +3,10 @@ package sten.sootla.fearalert;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-
 import sten.sootla.fearalert.R;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -16,13 +16,14 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.graphics.Rect;
 import android.graphics.Typeface;
+import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.v4.app.DialogFragment;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.telephony.SmsManager;
-import android.telephony.TelephonyManager;
 import android.text.Html;
 import android.text.Spannable;
 import android.text.SpannableString;
@@ -40,14 +41,35 @@ import android.view.animation.Animation;
 import android.view.animation.RotateAnimation;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.AdView;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesClient;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.location.LocationClient;
+import com.google.android.gms.location.LocationListener;
+import com.google.android.gms.location.LocationRequest;
 import com.google.gson.Gson;
 
-public class MainActivity extends ActionBarActivity implements OnLongClickListener, OnTouchListener{
+public class MainActivity extends ActionBarActivity implements
+		OnLongClickListener, OnTouchListener,
+		GooglePlayServicesClient.ConnectionCallbacks,
+		GooglePlayServicesClient.OnConnectionFailedListener, 
+		LocationListener {
+	
+	private final static int CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
+	private final static int UPDATE_INTERVAL = 5000;
+	private final static int FASTEST_INTERVAL = 1000;
+	
+	private LocationRequest mLocationRequest;
+	private LocationClient mLocationClient;
+	
+	private TextView obtainingLocationText; 
+	private ProgressBar obtainingLocationProgressBar; 
+	
+	boolean sendLocation; 
+	boolean shownLocationSuccessToast;
 	
 	private ImageView phoneImg;
 	private TextView textUp, textDown;
@@ -73,7 +95,7 @@ public class MainActivity extends ActionBarActivity implements OnLongClickListen
 	private final String cancelAlert = "RELEASE TO <font color='red'>CANCEL</font>";
 	private final String dragToCancel = "DRAG FINGER <font color='red'>OFF </font>TO CANCEL";
 	private final String noContacts = "<font color='red'>NO </font>CONTACTS";
-	
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -93,10 +115,16 @@ public class MainActivity extends ActionBarActivity implements OnLongClickListen
 		textUp = (TextView) findViewById(R.id.text_up);
 		textDown = (TextView) findViewById(R.id.text_down);
 		
+		obtainingLocationText = (TextView) findViewById(R.id.progress_text);
+		obtainingLocationProgressBar = (ProgressBar) findViewById(R.id.progress_bar);
+		
 		// Load font
 		Typeface typeface = Typeface.createFromAsset(getAssets(), "fonts/leaguegothic.ttf");
 		textUp.setTypeface(typeface);
 		textDown.setTypeface(typeface);
+		
+		Typeface leaguegothicRegular = Typeface.createFromAsset(getAssets(), "fonts/leaguegothic_regular.ttf");
+		obtainingLocationText.setTypeface(leaguegothicRegular);
 		
 		rotatingAnimation = new RotateAnimation(0.0f, 360.0f,
 				Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5592f);
@@ -106,7 +134,17 @@ public class MainActivity extends ActionBarActivity implements OnLongClickListen
 		cancelledToast = Toast.makeText(this, "Canceled.", Toast.LENGTH_SHORT);
 		
 		phoneImg.setOnLongClickListener(this); 
-		phoneImg.setOnTouchListener(this);	
+		phoneImg.setOnTouchListener(this);
+		
+		// make instances of LocationRequest and LocationClient
+		mLocationRequest = LocationRequest.create();
+		mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+		mLocationRequest.setInterval(UPDATE_INTERVAL);
+		mLocationRequest.setFastestInterval(FASTEST_INTERVAL);
+		
+		mLocationClient = new LocationClient(this, this, this);
+		
+		sendLocation = false;
 	}
 	
 	@Override
@@ -119,7 +157,26 @@ public class MainActivity extends ActionBarActivity implements OnLongClickListen
 		}
 		else {
 			textUp.setText(Html.fromHtml(startAlert), TextView.BufferType.SPANNABLE);
+			if (sendLocation) {
+				shownLocationSuccessToast = false;
+				if (servicesConnected()) {
+					mLocationClient.connect();
+				} else {
+					sendLocation = false;
+					String msg = "Google Play Services is not available. Messages will be sent without your location.";
+					Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
+				}
+			}
 		}
+	}
+	
+	@Override
+	public void onStop() {
+		if (mLocationClient.isConnected()) {
+			mLocationClient.removeLocationUpdates(this);
+		}
+		mLocationClient.disconnect();
+		super.onStop();
 	}
 	
 	@Override
@@ -186,6 +243,43 @@ public class MainActivity extends ActionBarActivity implements OnLongClickListen
 	}
 	
 	@Override
+	public void onConnected(Bundle dataBundle) {
+		obtainingLocationText.setVisibility(View.VISIBLE);
+		obtainingLocationProgressBar.setVisibility(View.VISIBLE);
+		mLocationClient.requestLocationUpdates(mLocationRequest, this);
+	}
+	
+	@Override
+	public void onDisconnected() {
+		obtainingLocationText.setVisibility(View.GONE);
+		obtainingLocationProgressBar.setVisibility(View.GONE);
+		
+		String errorMessage = "Diconnected from Google Play Services. Messages will be sent without your location.";
+		Toast.makeText(this, errorMessage, Toast.LENGTH_LONG).show();
+	}
+	
+	@Override
+	public void onConnectionFailed(ConnectionResult arg0) {
+		obtainingLocationText.setVisibility(View.GONE);
+		obtainingLocationProgressBar.setVisibility(View.GONE);
+		
+		String errorMessage = "Failed to connect to Google Play Services. Messages will be sent without your location.";
+		Toast.makeText(this, errorMessage, Toast.LENGTH_LONG).show();	
+	}
+	
+	@Override
+	public void onLocationChanged(Location location) {
+		obtainingLocationText.setVisibility(View.GONE);
+		obtainingLocationProgressBar.setVisibility(View.GONE);
+		
+		if (!shownLocationSuccessToast) {
+			Toast.makeText(this, "Successfully listening to your location.", Toast.LENGTH_SHORT).show();
+			shownLocationSuccessToast = true;
+		}
+	}
+	
+	
+	@Override
 	public boolean onLongClick(View v) {
 		if (smsContacts.size() == 0 && callContact == null) {
 			showNoContactsDialog();
@@ -228,6 +322,10 @@ public class MainActivity extends ActionBarActivity implements OnLongClickListen
 					listenForSmsStatus = true;
 				} 
 				if (smsContacts.size() != 0) {
+					if (sendLocation && !shownLocationSuccessToast) {
+						String msg = "Location is not yet obtained. Messages will be sent without location.";
+						Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
+					}
 					sendSMSTexts();
 					showSMSStatusDialog();
 				}
@@ -260,6 +358,16 @@ public class MainActivity extends ActionBarActivity implements OnLongClickListen
 		return super.onOptionsItemSelected(item);
 	}
 	
+	private boolean servicesConnected() {
+		int resultCode = GooglePlayServicesUtil.
+				isGooglePlayServicesAvailable(this);
+		if (ConnectionResult.SUCCESS == resultCode) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
 	private void updateStatusDialog(String name, SmsStatus status) {
 		smsContactStatus.put(name,  status); 
 		smsStatusAdapter = new SmsStatusAdapter(MainActivity.this,
@@ -275,9 +383,23 @@ public class MainActivity extends ActionBarActivity implements OnLongClickListen
 	}
 	
 	private void sendSMSTexts() {
+		StringBuffer locationMsg = new StringBuffer();
+		
+		if (shownLocationSuccessToast) {
+			Location location = mLocationClient.getLastLocation();
+			locationMsg.append(" @ http://maps.google.com/?q=");
+			locationMsg.append(location.getLatitude());
+			locationMsg.append(",");
+			locationMsg.append(location.getLongitude());
+		}
+		
 		smsContactStatus = new HashMap<String, SmsStatus>();
 		for (Contact contact : smsContacts) {
-			sendSMS(contact.getName(), contact.getFormatedNumber(), contact.getSMSContent());
+			if (contact.isSendLocation()) {
+				sendSMS(contact.getName(), contact.getFormatedNumber(), contact.getSMSContent() + locationMsg.toString());
+			} else {
+				sendSMS(contact.getName(), contact.getFormatedNumber(), contact.getSMSContent());
+			}
 			smsContactStatus.put(contact.getName(), SmsStatus.SENDING);
 		}
 	}
@@ -320,6 +442,7 @@ public class MainActivity extends ActionBarActivity implements OnLongClickListen
 	private void getContacts() {
 		smsContacts = new ArrayList<Contact>();
 		callContact = null;
+		sendLocation = false;
 		HashMap<String, String> map = new HashMap<String, String>();
 		SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
 			
@@ -329,14 +452,18 @@ public class MainActivity extends ActionBarActivity implements OnLongClickListen
 			if (json != null) {
 				map.put(entry.getKey(), json);
 				Contact contact = new Gson().fromJson(json, Contact.class);
-				if (contact.getCall()) {
+				if (contact.isCall()) {
 					callContact = contact;
 				} 
-				if (contact.getSMS()) {
+				if (contact.isSMS()) {
 					smsContacts.add(contact);
+					
+					if (contact.isSendLocation()) {
+						sendLocation = true;
+					}
 				}
 			}
-		} 
+		}
 	}
 	
 	private void showSMSStatusDialog() {
