@@ -1,6 +1,5 @@
 package sten.sootla.fearalert;
 
-import sten.sootla.fearalert.R;
 import android.support.v7.app.ActionBar;
 import android.app.AlertDialog;
 import android.content.DialogInterface;

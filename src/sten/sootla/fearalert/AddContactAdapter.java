@@ -2,10 +2,6 @@ package sten.sootla.fearalert;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
-
-import sten.sootla.fearalert.R;
-
-
 import android.content.Context;
 import android.graphics.Typeface;
 import android.view.LayoutInflater;
